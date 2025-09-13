@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const claimId = params.get("claimId");
 
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQe8-KX29q0owOQJKYQPYe8gpjsFp44k7rzKfmL_KrSrqfUhsuy1YoLoExUNmHGZ9E/exec"; // replace with your Apps Script URL
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0bZsagxRQg-Dkk-xdjnOw3TiWCElDkPBE4HPFLuA/dev"; // replace with your Apps Script URL
 
   async function fetchReward() {
     try {
