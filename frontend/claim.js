@@ -23,7 +23,7 @@ claimedAt:new Date().toISOString(),
 contactNumber, feedback
 };
 
-fetch("YOUR_GOOGLE_SCRIPT_URL",{
+fetch("https://script.google.com/macros/s/AKfycbx4e7MhVSSpk567tjn7dgLEJ5BI07IUYNbaHddyrrwWy64pO0nKI44YAEbDLx4TRRJ-/exec",{
 method:"POST",
 body:JSON.stringify(qrEntry),
 headers:{"Content-Type":"application/json"}
