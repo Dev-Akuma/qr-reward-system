@@ -61,7 +61,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (let i = 0; i < count; i++) {
       const claimId = generateUniqueId();
-      const url = `https://qr-reward-system-2ojjghaj8-mayengbam-devasis-singhs-projects.vercel.app/?id=${claimId}&category=${category}`;
+
+      // Use the live deployed claim page URL
+      const baseUrl = "https://qr-reward-system.vercel.app/claim.html";
+      const url = `${baseUrl}?id=${claimId}&category=${category}`;
 
       const base64Url = await createQrCode(url);
       if (base64Url) {
