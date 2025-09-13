@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (let i = 0; i < count; i++) {
       const claimId = generateUniqueId();
-      const url = `${window.location.origin}/claim.html?id=${claimId}&category=${category}`;
+      const url = `https://qr-reward-system-2ojjghaj8-mayengbam-devasis-singhs-projects.vercel.app/?id=${claimId}&category=${category}`;
 
       const base64Url = await createQrCode(url);
       if (base64Url) {
