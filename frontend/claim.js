@@ -1,20 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const claimId = params.get("id");
-  const category = params.get("category");
-
-  const rewardTitle = document.getElementById("rewardTitle");
   const form = document.getElementById("claimForm");
   const message = document.getElementById("message");
-
-  if (!claimId || !category) {
-    rewardTitle.innerText = "Invalid QR code";
-    return;
-  }
-
-  // Show reward info
-  rewardTitle.innerText = `🎉 You won a ${category.toUpperCase()} reward!`;
-  form.classList.remove("hidden");
+  const claimId = new URLSearchParams(window.location.search).get("claimId");
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -22,22 +9,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const contactNumber = document.getElementById("contactNumber").value;
     const feedback = document.getElementById("feedback").value;
 
-    // Update dataset
-    const qrEntry = window.qrDataset.find(q => q.qrId === claimId);
-    if (qrEntry) {
-      qrEntry.claimed = "Yes";
-      qrEntry.claimedAt = new Date().toISOString();
-      qrEntry.deliveryInfo = contactNumber; // store contact number
-      qrEntry.feedback = feedback;
-    }
+    const qrEntry = {
+      qrId: claimId,
+      category: "Sample Category", // Replace with actual category
+      rewardType: "Sample Reward", // Replace with actual reward type
+      generatedAt: new Date().toISOString(),
+      claimed: "Yes",
+      claimedAt: new Date().toISOString(),
+      contactNumber,
+      feedback
+    };
 
-    // Hide form and show confirmation message
-    form.classList.add("hidden");
-    message.innerHTML = `
-      ✅ Claim submitted!<br>
-      Our team will contact you soon to deliver your reward.
-    `;
-
-    console.log("Updated QR dataset:", qrEntry);
+    // POST to Google Sheet
+    fetch("https://script.google.com/macros/s/AKfycbyXt22oqWU--mqyhgpeDwuHKEE-tPac0p0sk1i2e4Q0fvrSzW-bPyEm_n95FC0U2a2a/exec", {
+      method: "POST",
+      body: JSON.stringify(qrEntry),
+      headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log("Claim saved:", data);
+      // Show thank you message
+      form.classList.add("hidden");
+      message.innerHTML = "✅ Claim submitted! Our team will contact you soon.";
+    })
+    .catch(err => {
+      console.error(err);
+      message.innerHTML = "❌ Something went wrong. Please try again.";
+    });
   });
 });
