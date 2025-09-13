@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const generateBtn = document.getElementById("generateBtn");
   const downloadZipBtn = document.getElementById("downloadZipBtn");
+  const downloadCSVBtn = document.getElementById("downloadCSVBtn");
   const loadingDiv = document.getElementById("loading");
   const downloadArea = document.getElementById("downloadArea");
   const previewArea = document.getElementById("previewArea");
@@ -8,19 +9,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const countInput = document.getElementById("count");
 
   let zip;
+  const qrDataset = []; // store QR codes + minimal info
 
-  // 🔧 Helper: Convert base64 string → Blob
+  // Convert base64 to Blob
   function base64ToBlob(base64, mime) {
     const byteChars = atob(base64.split(",")[1]);
     const byteNumbers = new Array(byteChars.length);
-    for (let i = 0; i < byteChars.length; i++) {
-      byteNumbers[i] = byteChars.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mime });
+    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+    return new Blob([new Uint8Array(byteNumbers)], { type: mime });
   }
 
-  // 🔧 Helper: generate QR code base64 from URL
+  // Generate QR Code and return Base64
   const createQrCode = (url) => {
     return new Promise((resolve) => {
       const tempDiv = document.createElement("div");
@@ -39,10 +38,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
+  function generateUniqueId() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+  }
+
+  // Generate QR Codes
   generateBtn.addEventListener("click", async () => {
     const category = categorySelect.value;
     const count = parseInt(countInput.value);
-
     if (isNaN(count) || count <= 0) {
       alert("Please enter a valid count.");
       return;
@@ -57,51 +60,66 @@ document.addEventListener("DOMContentLoaded", () => {
     zip = new JSZip();
 
     for (let i = 0; i < count; i++) {
-      try {
-        // 🔑 Ask backend to create reward entry
-        const resp = await fetch("https://your-backend-domain.com/api/rewards/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            category,
-            reward_type: "Customer Reward"
-          })
+      const claimId = generateUniqueId();
+      const url = `${window.location.origin}/claim.html?id=${claimId}&category=${category}`;
+
+      const base64Url = await createQrCode(url);
+      if (base64Url) {
+        // Show preview
+        const img = document.createElement("img");
+        img.src = base64Url;
+        img.className = "w-full h-auto rounded-lg shadow-md";
+        previewArea.appendChild(img);
+
+        // Add to ZIP
+        const blob = base64ToBlob(base64Url, "image/png");
+        zip.file(`qr-${category}-${claimId}.png`, blob);
+
+        // Add to dataset
+        qrDataset.push({
+          qrId: claimId,
+          category,
+          rewardType: `Reward for ${category}`,
+          generatedAt: new Date().toISOString(),
+          claimed: "No",
+          claimedAt: "",
+          deliveryInfo: "",
+          feedback: ""
         });
-
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.error || "Server error");
-
-        const url = data.claimUrl;
-        const claimId = data.claimId;
-
-        const base64Url = await createQrCode(url);
-
-        if (base64Url) {
-          // Show preview
-          const img = document.createElement("img");
-          img.src = base64Url;
-          img.className = "w-full h-auto rounded-lg shadow-md";
-          previewArea.appendChild(img);
-
-          // Save to ZIP (fixed conversion)
-          const blob = base64ToBlob(base64Url, "image/png");
-          zip.file(`qr-${category}-${claimId}.png`, blob);
-        }
-      } catch (err) {
-        console.error("QR generation failed:", err);
       }
     }
 
-    console.log("Files in zip:", Object.keys(zip.files)); // Debug check
-
+    console.log("Files in zip:", Object.keys(zip.files));
     loadingDiv.classList.add("hidden");
     downloadArea.classList.remove("hidden");
     previewArea.classList.remove("hidden");
     generateBtn.disabled = false;
   });
 
+  // Download ZIP of QR Codes
   downloadZipBtn.addEventListener("click", async () => {
     const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, "rewards_qrcodes.zip");
+    saveAs(content, "qr_rewards.zip");
   });
+
+  // Download CSV Dataset
+  downloadCSVBtn.addEventListener("click", () => {
+    if (!qrDataset.length) {
+      alert("No QR data to download!");
+      return;
+    }
+
+    const headers = Object.keys(qrDataset[0]);
+    const csvRows = [headers.join(",")];
+    qrDataset.forEach(row => {
+      const values = headers.map(h => `"${row[h]}"`);
+      csvRows.push(values.join(","));
+    });
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+    saveAs(blob, "qr_dataset.csv");
+  });
+
+  // Expose dataset globally so claim.js can access it
+  window.qrDataset = qrDataset;
 });

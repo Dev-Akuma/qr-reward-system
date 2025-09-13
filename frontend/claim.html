@@ -9,21 +9,39 @@
   <script defer src="claim.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
   <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+
+    <!-- Reward title dynamically updated -->
     <h1 id="rewardTitle" class="text-xl font-bold text-gray-800 mb-4">Loading reward...</h1>
 
+    <!-- Minimal claim form -->
     <form id="claimForm" class="space-y-4 hidden">
-      <input id="name" type="text" placeholder="Your Name" required class="w-full border rounded-lg px-4 py-2">
-      <input id="phone" type="text" placeholder="Phone Number" required class="w-full border rounded-lg px-4 py-2">
-      <input id="address" type="text" placeholder="Address" required class="w-full border rounded-lg px-4 py-2">
+
+      <!-- Contact number for reward delivery -->
+      <input id="contactNumber" type="text" placeholder="Your Contact Number" required
+        class="w-full border rounded-lg px-4 py-2">
+
+      <!-- Optional feedback for survey/improvements -->
+      <textarea id="feedback" placeholder="Optional feedback" class="w-full border rounded-lg px-4 py-2"></textarea>
+
+      <!-- Consent checkbox -->
       <label class="flex items-center space-x-2 text-sm">
         <input type="checkbox" id="consent" required>
-        <span>I agree to share my details for reward delivery.</span>
+        <span>I agree to provide info for reward delivery and improvements.</span>
       </label>
-      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg">Submit Claim</button>
+
+      <!-- Submit button -->
+      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg">
+        Submit Claim
+      </button>
+
     </form>
 
+    <!-- Message area after submission -->
     <p id="message" class="mt-4 text-sm text-gray-600"></p>
+
   </div>
+
 </body>
 </html>

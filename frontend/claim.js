@@ -1,53 +1,43 @@
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
+  const claimId = params.get("id");
+  const category = params.get("category");
 
   const rewardTitle = document.getElementById("rewardTitle");
   const form = document.getElementById("claimForm");
   const message = document.getElementById("message");
 
-  if (!id) {
+  if (!claimId || !category) {
     rewardTitle.innerText = "Invalid QR code";
     return;
   }
 
-  try {
-    const r = await fetch(`https://your-backend-domain.com/api/rewards/${id}`);
-    const data = await r.json();
+  // Show reward info
+  rewardTitle.innerText = `🎉 You won a ${category.toUpperCase()} reward!`;
+  form.classList.remove("hidden");
 
-    if (!r.ok) {
-      rewardTitle.innerText = data.error || "Reward not found";
-      return;
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const contactNumber = document.getElementById("contactNumber").value;
+    const feedback = document.getElementById("feedback").value;
+
+    // Update dataset
+    const qrEntry = window.qrDataset.find(q => q.qrId === claimId);
+    if (qrEntry) {
+      qrEntry.claimed = "Yes";
+      qrEntry.claimedAt = new Date().toISOString();
+      qrEntry.deliveryInfo = contactNumber; // store contact number
+      qrEntry.feedback = feedback;
     }
 
-    rewardTitle.innerText = `🎉 You won: ${data.reward_type}`;
-    form.classList.remove("hidden");
+    // Hide form and show confirmation message
+    form.classList.add("hidden");
+    message.innerHTML = `
+      ✅ Claim submitted!<br>
+      Our team will contact you soon to deliver your reward.
+    `;
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const claim = {
-        claimId: id,
-        name: document.getElementById("name").value,
-        phone: document.getElementById("phone").value,
-        address: document.getElementById("address").value,
-        consent: document.getElementById("consent").checked
-      };
-
-      const res = await fetch("https://your-backend-domain.com/api/claims", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(claim)
-      });
-
-      const json = await res.json();
-      if (res.ok) {
-        form.classList.add("hidden");
-        message.innerText = "✅ Claim submitted! We will contact you soon.";
-      } else {
-        message.innerText = "❌ " + (json.error || "Submission failed.");
-      }
-    });
-  } catch (err) {
-    rewardTitle.innerText = "Error loading reward.";
-  }
+    console.log("Updated QR dataset:", qrEntry);
+  });
 });
