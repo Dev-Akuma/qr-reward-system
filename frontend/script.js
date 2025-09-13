@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let zip;
   const qrDataset = [];
-  const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbx4e7MhVSSpk567tjn7dgLEJ5BI07IUYNbaHddyrrwWy64pO0nKI44YAEbDLx4TRRJ-/exec"; // Replace with your Apps Script URL
+  const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbwQe8-KX29q0owOQJKYQPYe8gpjsFp44k7rzKfmL_KrSrqfUhsuy1YoLoExUNmHGZ9E/exec"; // Replace with your Apps Script URL
 
   function base64ToBlob(base64, mime) {
     const byteChars = atob(base64.split(",")[1]);
