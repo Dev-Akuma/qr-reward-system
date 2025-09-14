@@ -10,7 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let zip;
   const qrDataset = [];
-  const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbx0bZsagxRQg-Dkk-xdjnOw3TiWCElDkPBE4HPFLuA/dev"; // Replace with your Apps Script URL
+
+  // ✅ Your Supabase details
+  const SUPABASE_URL = "https://jlxuawdjplzrvzdyjsnd.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpseHVhd2RqcGx6cnZ6ZHlqc25kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4Mzg2NzUsImV4cCI6MjA3MzQxNDY3NX0.G-KHb-guiyadVbQhIfTH1q03ENSZpFv_G65qiThmq3k";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   function base64ToBlob(base64, mime) {
     const byteChars = atob(base64.split(",")[1]);
@@ -33,16 +37,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
   }
 
-  async function saveToGoogleSheet(entry) {
-    try {
-      await fetch(GOOGLE_SHEET_URL, {
-        method: "POST",
-        body: JSON.stringify(entry),
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      console.error("Failed to update Google Sheet:", err);
-    }
+  async function saveToSupabase(entry) {
+    const { error } = await supabase.from("qr_codes").insert([entry]);
+    if (error) console.error("❌ Supabase insert error:", error);
   }
 
   generateBtn.addEventListener("click", async () => {
@@ -78,16 +75,16 @@ document.addEventListener("DOMContentLoaded", () => {
           category,
           rewardType: `Reward for ${category}`,
           generatedAt: new Date().toISOString(),
-          claimed: "No",
-          claimedAt: "",
-          contactNumber: "",
-          feedback: "",
+          claimed: false,
+          claimedAt: null,
+          contactNumber: null,
+          feedback: null,
         };
 
         qrDataset.push(entry);
 
-        // Save immediately to Google Sheet
-        await saveToGoogleSheet(entry);
+        // ✅ Save to Supabase
+        await saveToSupabase(entry);
       }
     }
 
@@ -110,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const headers = Object.keys(qrDataset[0]);
     const csvRows = [headers.join(",")];
     qrDataset.forEach((row) => {
-      csvRows.push(headers.map((h) => `"${row[h]}"`).join(","));
+      csvRows.push(headers.map((h) => `"${row[h] ?? ""}"`).join(","));
     });
     const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
     saveAs(blob, "qr_dataset.csv");

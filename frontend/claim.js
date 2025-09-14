@@ -9,24 +9,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const claimId = params.get("claimId");
 
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0bZsagxRQg-Dkk-xdjnOw3TiWCElDkPBE4HPFLuA/dev"; // replace with your Apps Script URL
+  // ✅ Supabase details
+  const SUPABASE_URL = "https://jlxuawdjplzrvzdyjsnd.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpseHVhd2RqcGx6cnZ6ZHlqc25kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4Mzg2NzUsImV4cCI6MjA3MzQxNDY3NX0.G-KHb-guiyadVbQhIfTH1q03ENSZpFv_G65qiThmq3k";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   async function fetchReward() {
-    try {
-      const res = await fetch(`${GOOGLE_SCRIPT_URL}?qrId=${claimId}`);
-      const data = await res.json();
+    const { data, error } = await supabase
+      .from("qr_codes")
+      .select("*")
+      .eq("qrId", claimId)
+      .single();
 
-      if (data.error) {
-        rewardTitle.textContent = "QR code not found or expired.";
-        return;
-      }
-
-      rewardTitle.textContent = `Congratulations! You won a ${data.rewardType} 🎉`;
-      form.classList.remove("hidden");
-    } catch (err) {
-      console.error(err);
-      rewardTitle.textContent = "Failed to load reward. Try again later.";
+    if (error || !data) {
+      rewardTitle.textContent = "QR code not found or expired.";
+      return;
     }
+
+    rewardTitle.textContent = `🎉 Congratulations! You won a ${data.rewardType}`;
+    form.classList.remove("hidden");
   }
 
   fetchReward();
@@ -42,32 +43,22 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const qrEntry = {
-      qrId: claimId,
-      claimed: "Yes",
-      claimedAt: new Date().toISOString(),
-      contactNumber,
-      feedback
-    };
+    const { error } = await supabase
+      .from("qr_codes")
+      .update({
+        claimed: true,
+        claimedAt: new Date().toISOString(),
+        contactNumber,
+        feedback,
+      })
+      .eq("qrId", claimId);
 
-    try {
-      const res = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify(qrEntry),
-        headers: { "Content-Type": "application/json" }
-      });
-
-      const result = await res.json();
-
-      if (result.status === "ok") {
-        form.classList.add("hidden");
-        message.innerHTML = "✅ Claim submitted! Our team will contact you soon.";
-      } else {
-        message.innerHTML = "❌ Something went wrong. Please try again.";
-      }
-    } catch (err) {
-      console.error(err);
+    if (error) {
+      console.error(error);
       message.innerHTML = "❌ Failed to submit claim. Please try again.";
+    } else {
+      form.classList.add("hidden");
+      message.innerHTML = "✅ Claim submitted! Our team will contact you soon.";
     }
   });
 });
