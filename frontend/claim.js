@@ -2,16 +2,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const rewardTitle = document.getElementById("rewardTitle");
   const form = document.getElementById("claimForm");
   const message = document.getElementById("message");
-  const contactInput = document.getElementById("contactNumber");
+  const contactInput = document.getElementById("contactName");
   const feedbackInput = document.getElementById("feedback");
 
   // Get QR parameters from URL
   const params = new URLSearchParams(window.location.search);
   const claimId = params.get("claimId");
 
-  // ✅ Supabase details
-  const SUPABASE_URL = "https://twizpcfwkjuqjjygrbtf.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aXpwY2Z3a2p1cWpqeWdyYnRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NDI2NDUsImV4cCI6MjA3MzQxODY0NX0.fs8NpTy20yztVnygTHqkoKDG6nRlmivqs4bbm2OKRYc";
+  // Supabase details
+  const SUPABASE_URL = "https://jlxuawdjplzrvzdyjsnd.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpseHVhd2RqcGx6cnZ6ZHlqc25kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4Mzg2NzUsImV4cCI6MjA3MzQxNDY3NX0.G-KHb-guiyadVbQhIfTH1q03ENSZpFv_G65qiThmq3k";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   async function fetchReward() {
@@ -22,11 +22,18 @@ document.addEventListener("DOMContentLoaded", () => {
       .single();
 
     if (error || !data) {
-      rewardTitle.textContent = "QR code not found or expired.";
+      rewardTitle.textContent = "QR code not found or already claimed.";
       return;
     }
+    
+    // Added: Check if the prize has already been claimed
+    if (data.claimed) {
+        rewardTitle.textContent = "This prize has already been claimed.";
+        return;
+    }
 
-    rewardTitle.textContent = `🎉 Congratulations! You won a ${data.rewardType}`;
+    // Updated: Use the 'rewardType' column from the fetched data
+    rewardTitle.textContent = `🎉 Congratulations! You won a ${data.rewardType}!`;
     form.classList.remove("hidden");
   }
 
@@ -35,11 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const contactNumber = contactInput.value.trim();
+    const contactName = contactInput.value.trim();
     const feedback = feedbackInput.value.trim();
 
-    if (!contactNumber) {
-      alert("Please enter your contact number.");
+    if (!contactName) {
+      alert("Please enter your full name.");
       return;
     }
 
@@ -48,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .update({
         claimed: true,
         claimedAt: new Date().toISOString(),
-        contactNumber,
+        name: contactName, // Updated to use 'name' field 
         feedback,
       })
       .eq("qrId", claimId);
